@@ -23,7 +23,7 @@ app.use((req, res, next) => {
 
 app.get('/', (req, res) => res.json(generateNewState()))
 
-port = 3000
+port = (process.env.PORT || 3000)
 app.listen(port, 
     () => console.log(`Labelback app running on ${port}`)
 )
