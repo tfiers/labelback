@@ -35,7 +35,27 @@ app.use((req, res, next) => {
 // To parse JSON-encoded bodies
 app.use(express.json())
 
-app.get('/fetch', (req, res) => res.json(generateNewState()))
+app.get('/fetch', (req, res) => {
+  MongoClient.connect(mongoURI)
+  .then((client) => {
+    const db = client.db(client.s.options.dbName)
+    const col = db.collection(collectionName)
+    return col.findOne({name: 'dummy'})
+  })
+  .then((result) => {
+    let state
+    if (result == null) {
+      state = generateNewState()
+      console.log('Generated new state')
+    }
+    else {
+      state = result.state
+      console.log('Read existing state')
+    }
+    res.json(state)
+  })
+  .catch(console.log)
+})
 
 app.post('/save', (req, res) => {
   res.end()
