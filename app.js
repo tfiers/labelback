@@ -1,3 +1,5 @@
+'use strict'
+
 const fs = require('fs')
 const MongoClient = require('mongodb').MongoClient;
 const express = require('express')
@@ -47,6 +49,9 @@ app.post('/save', (req, res) => {
       {upsert: true})
   })
   .catch(console.log)
+  .then(() => {
+    console.log('Upserted state')
+  })
 })
 
 app.listen(port, 
