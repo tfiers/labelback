@@ -1,5 +1,10 @@
+const MongoClient = require('mongodb').MongoClient;
 const express = require('express')
 const app = express()
+
+const port = (process.env.PORT || 3000)
+const mongoURI = (process.env.MONGODB_URI ||
+                  fs.readFileSync('mongodb_URI', 'utf8'))
 
 let generateEvents = (num) => (
     Array(num).fill().map((v,i)=>({id: i}))
@@ -23,7 +28,6 @@ app.use((req, res, next) => {
 
 app.get('/', (req, res) => res.json(generateNewState()))
 
-port = (process.env.PORT || 3000)
 app.listen(port, 
     () => console.log(`Labelback app running on ${port}`)
 )
