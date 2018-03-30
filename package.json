@@ -2,7 +2,7 @@
   "name": "labelback",
   "version": "1.0.0",
   "description": "Backend to http://github.com/tfiers/labelface. Persists state and authorises users.",
-  "main": "index.js",
+  "main": "app.js",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/tfiers/labelback.git"
