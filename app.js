@@ -6,6 +6,8 @@ const port = (process.env.PORT || 3000)
 const mongoURI = (process.env.MONGODB_URI ||
                   fs.readFileSync('mongodb_URI', 'utf8'))
 
+const collectionName = 'state_collection'
+
 let generateEvents = (num) => (
     Array(num).fill().map((v,i)=>({id: i}))
 )
@@ -19,11 +21,6 @@ let generateNewState = () => ({
     },
 })
 
-MongoClient.connect(mongoURI)
-.then((err, client) => {
-  console.log(client);
-})
-
 const app = express()
 
 app.use((req, res, next) => {
@@ -33,7 +30,24 @@ app.use((req, res, next) => {
     next()
 })
 
-app.get('/', (req, res) => res.json(generateNewState()))
+// To parse JSON-encoded bodies
+app.use(express.json())
+
+app.get('/fetch', (req, res) => res.json(generateNewState()))
+
+app.post('/save', (req, res) => {
+  res.end()
+  MongoClient.connect(mongoURI)
+  .then((client) => {
+    const db = client.db(client.s.options.dbName)
+    const col = db.collection(collectionName)
+    return col.replaceOne(
+      {name: 'dummy'},
+      {name: 'dummy', state: req.body},
+      {upsert: true})
+  })
+  .catch(console.log)
+})
 
 app.listen(port, 
     () => console.log(`Labelback app running on ${port}`)
