@@ -69,14 +69,16 @@ app.get('/fetch', (req, res) => {
 
 
 app.post('/save', (req, res) => {
-  res.end()
   mongoExec((collection) => (
     collection.replaceOne(
           {name: 'dummy'},
           {name: 'dummy', state: req.body},
           {upsert: true}
     )
-    .then(() => console.log('Upserted state'))
+    .then(() => {
+      res.end()
+      console.log('Upserted state')
+    })
   ))
 })
 
