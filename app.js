@@ -16,12 +16,26 @@ let generateEvents = (num) => (
 
 let generateNewState = () => ({
     'events': {
-      'unlabelled': generateEvents(1000),
+      'unlabelled': generateEvents(50),
       'not_SWR': [],
       'SWR': [],
       'activeEvent': null,
     },
 })
+
+let mongoExec = (fun) => {
+  let client
+  MongoClient.connect(mongoURI)
+  .then((c) => {
+    client = c
+    const db = client.db(client.s.options.dbName)
+    const col = db.collection(collectionName)
+    return fun(col)
+  })
+  .catch(console.log)
+  .then(() => client.close())
+}
+
 
 const app = express()
 
@@ -36,42 +50,34 @@ app.use((req, res, next) => {
 app.use(express.json())
 
 app.get('/fetch', (req, res) => {
-  MongoClient.connect(mongoURI)
-  .then((client) => {
-    const db = client.db(client.s.options.dbName)
-    const col = db.collection(collectionName)
-    return col.findOne({name: 'dummy'})
-  })
-  .then((result) => {
-    let state
-    if (result == null) {
-      state = generateNewState()
-      console.log('Generated new state')
-    }
-    else {
-      state = result.state
-      console.log('Read existing state')
-    }
-    res.json(state)
-  })
-  .catch(console.log)
+  mongoExec((collection) => (
+    collection.findOne({name: 'dummy'})
+    .then((result) => {
+      let state
+      if (result == null) {
+        state = generateNewState()
+        console.log('Generated new state')
+      }
+      else {
+        state = result.state
+        console.log('Read existing state')
+      }
+      res.json(state)
+    })
+  ))
 })
+
 
 app.post('/save', (req, res) => {
   res.end()
-  MongoClient.connect(mongoURI)
-  .then((client) => {
-    const db = client.db(client.s.options.dbName)
-    const col = db.collection(collectionName)
-    return col.replaceOne(
-      {name: 'dummy'},
-      {name: 'dummy', state: req.body},
-      {upsert: true})
-  })
-  .catch(console.log)
-  .then(() => {
-    console.log('Upserted state')
-  })
+  mongoExec((collection) => (
+    collection.replaceOne(
+          {name: 'dummy'},
+          {name: 'dummy', state: req.body},
+          {upsert: true}
+    )
+    .then(() => console.log('Upserted state'))
+  ))
 })
 
 app.listen(port, 
