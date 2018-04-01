@@ -11,7 +11,10 @@ const mongoURI = (process.env.MONGODB_URI ||
 const collectionName = 'state_collection'
 
 let generateEvents = (num) => (
-    Array(num).fill().map((v,i)=>({id: i}))
+    Array(num).fill().map((v,i) => ({
+      id: i,
+      comment: '',
+    }))
 )
 
 let generateNewState = () => ({
