@@ -16,7 +16,7 @@ let generateEvents = (num) => (
 
 let generateNewState = () => ({
     'events': {
-      'unlabelled': generateEvents(50),
+      'unlabelled': generateEvents(1000),
       'not_SWR': [],
       'SWR': [],
       'activeEvent': null,
