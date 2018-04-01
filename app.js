@@ -10,13 +10,13 @@ const mongoURI = (process.env.MONGODB_URI ||
 
 const collectionName = 'state_collection'
 
-let generateEvents = (num) => (
+const generateEvents = (num) => (
     Array(num).fill().map((v,i) => ({
       id: i,
     }))
 )
 
-let generateNewState = () => ({
+const generateNewState = () => ({
     'events': {
       'unlabelled': generateEvents(1000),
       'not_SWR': [],
@@ -25,7 +25,7 @@ let generateNewState = () => ({
     },
 })
 
-let mongoExec = (fun) => {
+const mongoExec = (fun) => {
   let client
   MongoClient.connect(mongoURI)
   .then((c) => {
