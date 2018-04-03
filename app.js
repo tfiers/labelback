@@ -11,7 +11,8 @@ const mongoURI = (process.env.MONGODB_URI ||
 const slackSecret = (process.env.SLACK_SECRET ||
                      fs.readFileSync('slack_secret', 'utf8'))
 
-const collectionName = 'state_collection'
+const stateCollection = 'state'
+const infoCollection = 'info'
 const tupleSep = ' - '
 
 const tupleToStr = (tuple) => (
@@ -36,8 +37,7 @@ const mongoExec = (fun) => {
   .then((c) => {
     client = c
     const db = client.db(client.s.options.dbName)
-    const col = db.collection(collectionName)
-    return fun(col)
+    return fun(db)
   })
   .catch(console.log)
   .then(() => client.close())
@@ -56,9 +56,34 @@ app.use((req, res, next) => {
 // To parse JSON-encoded bodies
 app.use(express.json())
 
+app.get('/authors', (req, res) => {
+  mongoExec((db) => (
+    db.collection('info')
+    .findOne({key: 'authors'})
+    .then((result) => {
+      res.json(result.value)
+    })
+  ))
+})
+
+app.post('/authors', (req, res) => {
+  mongoExec((db) => (
+    db.collection('info')
+    .findOneAndUpdate(
+      { key: 'authors' },
+      { $push: { 'value': req.body.author } }
+    )
+    .then((result) => {
+      console.log(`Added author ${req.body.author}`)
+      res.end()
+    })
+  ))
+})
+
 app.get('/subsets', (req, res) => {
-  mongoExec((collection) => (
-    collection.findOne({key: 'subsets'})
+  mongoExec((db) => (
+    db.collection('info')
+    .findOne({key: 'subsets'})
     .then((result) => {
       res.json(result.value.map(tupleToStr))
     })
@@ -67,8 +92,9 @@ app.get('/subsets', (req, res) => {
 
 app.get('/state', (req, res) => {
   const tup = strToTuple(req.query.subset)
-  mongoExec((collection) => (
-    collection.findOne({
+  mongoExec((db) => (
+    db.collection('state')
+    .findOne({
       author: req.query.author,
       subset: tup,
     })
@@ -88,8 +114,9 @@ app.get('/state', (req, res) => {
 })
 
 app.post('/state', (req, res) => {
-  mongoExec((collection) => (
-    collection.replaceOne(
+  mongoExec((db) => (
+    db.collection('state')
+    .replaceOne(
       {
         author: req.body.author,
         subset: strToTuple(req.body.subset),
