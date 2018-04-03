@@ -3,13 +3,10 @@
 const fs = require('fs')
 const MongoClient = require('mongodb').MongoClient;
 const express = require('express')
-const request = require('request-promise')
 
 const port = (process.env.PORT || 3000)
 const mongoURI = (process.env.MONGODB_URI ||
                   fs.readFileSync('mongodb_URI', 'utf8'))
-const slackSecret = (process.env.SLACK_SECRET ||
-                     fs.readFileSync('slack_secret', 'utf8'))
 
 const stateCollection = 'state'
 const infoCollection = 'info'
@@ -136,23 +133,6 @@ app.post('/state', (req, res) => {
     })
   ))
 })
-
-app.get('/slack', (req, res) => {
-  request.get({
-    url: 'https://slack.com/api/oauth.access',
-    qs: {
-      client_id: '3796102131.339930271830',
-      client_secret: slackSecret,
-      code: req.query.code,
-    },
-  })
-  .then((data) => {
-    let access_token = JSON.parse(data).access_token
-    res.redirect(`/app.html?token=${access_token}`)
-  })
-})
-
-app.use(express.static('../labelface'))
 
 app.listen(port, 
     () => console.log(`Labelback app running on ${port}`)
