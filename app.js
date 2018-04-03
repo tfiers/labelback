@@ -3,10 +3,13 @@
 const fs = require('fs')
 const MongoClient = require('mongodb').MongoClient;
 const express = require('express')
+const request = require('request-promise')
 
 const port = (process.env.PORT || 3000)
 const mongoURI = (process.env.MONGODB_URI ||
                   fs.readFileSync('mongodb_URI', 'utf8'))
+const slackSecret = (process.env.SLACK_SECRET ||
+                     fs.readFileSync('slack_secret', 'utf8'))
 
 const collectionName = 'state_collection'
 const tupleSep = ' - '
@@ -23,17 +26,9 @@ const strToTuple = (str) => (
 const generateEvents = (start, stop) => (
     Array(stop - start).fill().map((v,i) => ({
       id: start + i,
+      label: null,
     }))
 )
-
-const generateNewState = (start, stop) => ({
-    'events': {
-      'unlabelled': generateEvents(start, stop),
-      'not_SWR': [],
-      'SWR': [],
-      'activeEvent': null,
-    },
-})
 
 const mongoExec = (fun) => {
   let client
@@ -80,7 +75,7 @@ app.get('/state', (req, res) => {
     .then((result) => {
       let state
       if (result == null) {
-        state = generateNewState(tup[0], tup[1] + 1)
+        state = { events: generateEvents(tup[0], tup[1] + 1) }
         console.log('Generated new state')
       }
       else {
@@ -114,6 +109,23 @@ app.post('/state', (req, res) => {
     })
   ))
 })
+
+app.get('/slack', (req, res) => {
+  request.get({
+    url: 'https://slack.com/api/oauth.access',
+    qs: {
+      client_id: '3796102131.339930271830',
+      client_secret: slackSecret,
+      code: req.query.code,
+    },
+  })
+  .then((data) => {
+    let access_token = JSON.parse(data).access_token
+    res.redirect(`/app.html?token=${access_token}`)
+  })
+})
+
+app.use(express.static('../labelface'))
 
 app.listen(port, 
     () => console.log(`Labelback app running on ${port}`)
