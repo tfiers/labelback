@@ -134,6 +134,17 @@ app.post('/state', (req, res) => {
   ))
 })
 
+app.get('/dump', (req, res) => {
+  mongoExec((db) => (
+    db.collection('state')
+    .find({})
+    .toArray()
+    .then((docs) => {
+      res.json(docs)
+    })
+  ))
+})
+
 app.listen(port, 
     () => console.log(`Labelback app running on ${port}`)
 )
